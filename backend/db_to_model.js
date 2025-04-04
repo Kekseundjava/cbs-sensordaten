@@ -110,7 +110,8 @@ app.get('/GetAllActualData', (req, res) => {
                         "Temperatur": roomData.temp || null,
                         "Luftfeuchtigkeit": roomData.hum || null,
                         "Licht": roomData.light || null,
-                        "Display Verbrauch": roomData.display || null
+                        "Display Verbrauch": roomData.display || null,
+                        "Rolladaen": roomData.roller_shutter || null
                     });
                 }
             }

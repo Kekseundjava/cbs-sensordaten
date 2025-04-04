@@ -13,12 +13,12 @@ async function getAllActualData() {
 
 // Funktion, um GetZeitSensorData() abzurufen
 async function getZeitSensorData() {
-    const gebaeude = 'a';
-    const etage = '1';
-    const raum = '22';
-    const sensor = 'light';
-    const datum_von = '2025-04-03 22:01:50';
-    const datum_bis = '2025-04-03 22:38:50';
+    const gebaeude = 'b';
+    const etage = 'e';
+    const raum = '16';
+    const sensor = 'display';
+    const datum_von = '2025-04-04 00:00:00';
+    const datum_bis = '2025-04-04 23:59:59';
 
     try {
         const response = await axios.get('http://localhost:5001/GetZeitSensorData', {
