@@ -12,3 +12,4 @@ class RoomData {
         return `RaumSensorDaten(Gebaeude=${this.gebaeude}, Etage=${this.etage}, Raum=${this.raum}, Temperatur=${this.temperatur}, Luftfeuchtigkeit=${this.luftfeuchtigkeit})`;
     }
 }
+module.exports = RoomData;
