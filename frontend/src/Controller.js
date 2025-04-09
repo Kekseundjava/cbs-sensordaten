@@ -4,9 +4,9 @@ const RoomData = require('./RoomData');
 const ZeitSensorData = require('./ZeitSensorData');
 
 
-class SensorDataController {
+export class SensorDataController {
 //#region Konstruktor
-    constructor() {
+    constructor(viewMethods) {
         this.filter = {
             gebaeude: null,
             etage: null,
@@ -15,6 +15,7 @@ class SensorDataController {
             datumVon: null,
             datumBis: null
         };
+        this.view = viewMethods;
         this.cachedAllActualData = null;
     }
 //#endregion
@@ -48,13 +49,18 @@ class SensorDataController {
     startExport(){
         
     }
+
+    tryLogin(name, password){
+
+    }
+
 //#endregion
 //#region Public Methodes
     async liefereVerfuegbareGebaeude() {
         const daten = await this.holeAllActualData();
         return [...new Set(daten.map(e => e.Gebaeude))];
     }
-
+    
     async liefereVerfuegbareEtagen() {
         const daten = await this.holeAllActualData();
         return [...new Set(daten.map(e => e.Etage))];
@@ -104,7 +110,8 @@ class SensorDataController {
             new RoomData(e.Gebaeude, e.Etage, e.Raum, e.Temperatur, e.Luftfeuchtigkeit)
         );
 
-        this.simuliereViewMitRoomData(roomDataList);
+        //this.simuliereViewMitRoomData(roomDataList);
+        this.view.setSensorData(roomDataList);
     }
 
     async holeUndVerarbeiteZeitSensorDaten() {
@@ -118,7 +125,8 @@ class SensorDataController {
             d => new ZeitSensorData(d.timestamp, d.value)
         );
 
-        this.simuliereViewMitZeitSensorDaten(zeitSensorDataList);
+        //this.simuliereViewMitZeitSensorDaten(zeitSensorDataList);
+        this.view.setTimeSensorData(zeitSensorDataList);
     }
 
     async holeAllActualData() {
