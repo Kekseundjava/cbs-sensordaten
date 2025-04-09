@@ -60,7 +60,6 @@ export class SensorDataController {
         const daten = await this.holeAllActualData();
         return [...new Set(daten.map(e => e.Gebaeude))];
     }
-    
     async liefereVerfuegbareEtagen() {
         const daten = await this.holeAllActualData();
         return [...new Set(daten.map(e => e.Etage))];
