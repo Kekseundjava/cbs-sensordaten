@@ -19,25 +19,6 @@ class SensorDataController {
     }
 //#endregion
 //#region EventHandler
-    simuliereViewMitRoomData(roomDataList) {
-        console.log("=== Raumdaten (gefiltert) ===");
-        if (roomDataList.length === 0) {
-            console.log("Keine Daten gefunden.");
-        } else {
-            roomDataList.forEach(d => console.log(d.toString()));
-        }
-    }
-
-    simuliereViewMitZeitSensorDaten(sensorDataList) {
-        console.log("=== Zeit-Sensor-Daten ===");
-        if (sensorDataList.length === 0) {
-            console.log("Keine Zeitdaten gefunden.");
-        } else {
-            sensorDataList.forEach(d => console.log(d.toString()));
-        }
-    }
-//#endregion
-//#region Public Methodes
     setGebaeude(value) {
         this.filter.gebaeude = value;
         this.updateView();
@@ -67,6 +48,36 @@ class SensorDataController {
     startExport(){
         
     }
+//#endregion
+//#region Public Methodes
+    async liefereVerfuegbareGebaeude() {
+        const daten = await this.holeAllActualData();
+        return [...new Set(daten.map(e => e.Gebaeude))];
+    }
+
+    async liefereVerfuegbareEtagen() {
+        const daten = await this.holeAllActualData();
+        return [...new Set(daten.map(e => e.Etage))];
+    }
+
+    async liefereVerfuegbareRaeume() {
+        const daten = await this.holeAllActualData();
+        return [...new Set(daten.map(e => e.Raum))];
+    }
+
+    async liefereVerfuegbareSensoren() {
+        const daten = await this.holeAllActualData();
+        const sensorKeys = new Set();
+        daten.forEach(entry => {
+            Object.keys(entry).forEach(key => {
+                if (!["Gebaeude", "Etage", "Raum"].includes(key)) {
+                    sensorKeys.add(key);
+                }
+            });
+        });
+        return Array.from(sensorKeys);
+    }
+
 //#endregion
 //#region Internal Methodes
     async updateView() {
@@ -121,33 +132,25 @@ class SensorDataController {
     }
 //#endregion
 //#region View Simulation
-    async liefereVerfuegbareGebaeude() {
-        const daten = await this.holeAllActualData();
-        return [...new Set(daten.map(e => e.Gebaeude))];
+
+    simuliereViewMitRoomData(roomDataList) {
+        console.log("=== Raumdaten (gefiltert) ===");
+        if (roomDataList.length === 0) {
+            console.log("Keine Daten gefunden.");
+        } else {
+            roomDataList.forEach(d => console.log(d.toString()));
+        }
     }
 
-    async liefereVerfuegbareEtagen() {
-        const daten = await this.holeAllActualData();
-        return [...new Set(daten.map(e => e.Etage))];
+    simuliereViewMitZeitSensorDaten(sensorDataList) {
+        console.log("=== Zeit-Sensor-Daten ===");
+        if (sensorDataList.length === 0) {
+            console.log("Keine Zeitdaten gefunden.");
+        } else {
+            sensorDataList.forEach(d => console.log(d.toString()));
+        }
     }
-
-    async liefereVerfuegbareRaeume() {
-        const daten = await this.holeAllActualData();
-        return [...new Set(daten.map(e => e.Raum))];
-    }
-
-    async liefereVerfuegbareSensoren() {
-        const daten = await this.holeAllActualData();
-        const sensorKeys = new Set();
-        daten.forEach(entry => {
-            Object.keys(entry).forEach(key => {
-                if (!["Gebaeude", "Etage", "Raum"].includes(key)) {
-                    sensorKeys.add(key);
-                }
-            });
-        });
-        return Array.from(sensorKeys);
-    }
+    
 //#endregion
 }
 module.exports = SensorDataController;
