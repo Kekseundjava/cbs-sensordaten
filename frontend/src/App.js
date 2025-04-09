@@ -1,24 +1,33 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
+import Login from './login';
+import DataPage from './data';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const handleLogin = (username, password) => {
+    // For simplicity, we assume any username and password is correct
+    if (username && password) {
+      setIsAuthenticated(true);
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div>
+        <Routes>
+          {/* Login route */}
+          <Route path="/" element={<Login onLogin={handleLogin} />} />
+          
+          {/* Data page route (only accessible after login) */}
+          <Route
+            path="/data"
+            element={isAuthenticated ? <DataPage /> : <Navigate to="/" />}
+          />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
