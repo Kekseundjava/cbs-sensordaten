@@ -1,6 +1,6 @@
 import './App.css';
 import { useState, useEffect } from "react";
-import {SensorDataController} from './Controller.js';
+import { SensorDataController } from './Controller.js';
 
 function App() {
   // State variables
@@ -14,10 +14,31 @@ function App() {
   const [endtime, setEndTime] = useState("");
   const [text, setText] = useState("");
 
-  const controller = new SensorDataController();
+  // 1. Methoden definieren, auf die der Controller Zugriff haben soll
+  const setSensorData = (sensorData) => {setBuildings(['x','y','z'])};
+  const setTimeSensorData = (timeSensorData) => {};
+  const setWarnungData = (warnungData) => {};
+  const setWetterData = (wetterData) => {};
 
-  // Arrays for each select
-  const buildings = controller.liefereVerfuegbareGebaeude();
+  // 2. Controller erzeugen und Methoden übergeben
+  const controller = new SensorDataController({
+    setSensorData,
+    setTimeSensorData,
+    setWarnungData,
+    setWetterData
+  });
+
+  const [buildings, setBuildings] = useState([]);
+  useEffect(() => {
+    // Async function to fetch available buildings
+    const fetchBuildings = async () => {
+      const buildingsList = await controller.liefereVerfuegbareGebaeude();
+      setBuildings(buildingsList); // Set the buildings in state
+      controller.temp()
+    };
+
+    fetchBuildings(); // Call the async function
+  }, []);
   const floors = ["E", "1", "2"];
   const rooms = ["01", "02"];
   const sensors = ["x", "y"];

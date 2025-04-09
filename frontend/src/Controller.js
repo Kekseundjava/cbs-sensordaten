@@ -4,9 +4,9 @@ const RoomData = require('./RoomData');
 const ZeitSensorData = require('./ZeitSensorData');
 
 
-class SensorDataController {
+export class SensorDataController {
 //#region Konstruktor
-    constructor() {
+    constructor(viewMethods) {
         this.filter = {
             gebaeude: null,
             etage: null,
@@ -15,6 +15,7 @@ class SensorDataController {
             datumVon: null,
             datumBis: null
         };
+        this.view = viewMethods;
         this.cachedAllActualData = null;
     }
 //#endregion
@@ -48,13 +49,20 @@ class SensorDataController {
     startExport(){
         
     }
+
+    tryLogin(name, password){
+
+    }
+
 //#endregion
 //#region Public Methodes
     async liefereVerfuegbareGebaeude() {
         const daten = await this.holeAllActualData();
         return [...new Set(daten.map(e => e.Gebaeude))];
     }
-
+    temp(){        
+        this.view.setSensorData("hi1")
+    }
     async liefereVerfuegbareEtagen() {
         const daten = await this.holeAllActualData();
         return [...new Set(daten.map(e => e.Etage))];

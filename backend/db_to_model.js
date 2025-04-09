@@ -1,13 +1,14 @@
 const express = require('express');
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
+const cors = require('cors');
 
 
 // Express-App erstellen
 const app = express();
 const port = 5001;
 app.use(express.json());
-
+app.use(cors());
 
 // Verbindung zur MySQL-Datenbank (XAMPP)
 const db = mysql.createConnection({
