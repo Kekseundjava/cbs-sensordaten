@@ -8,15 +8,18 @@ const app = express();
 const port = 5000;
 app.use(express.json());
 
+// Interner Cache: letzter erfolgreicher DB-Eintrag je Sensor-Standort
+const lastInsertMap = new Map();
+const getKey = (geb, stock, raum, sensor) => `${geb}|${stock}|${raum}|${sensor}`;
+
 // Verbindung zur MySQL-Datenbank (XAMPP)
 const db = mysql.createConnection({
-    host: '127.0.0.1',  // XAMPP MySQL läuft lokal
-    user: 'root',       // Standard-Benutzername
-    password: '',       // Standard-Passwort (leer lassen)
+    host: '127.0.0.1',
+    user: 'root',
+    password: '',
     database: 'cbs-sensordaten'
 });
 
-// Verbindung prüfen
 db.connect(err => {
     if (err) {
         console.error('Fehler beim Verbinden zur MySQL-Datenbank:', err);
@@ -32,70 +35,86 @@ client.on('connect', () => {
     console.log('MQTT verbunden');
     client.subscribe('cbssimulation/#', err => {
         if (!err) {
-            console.log('Alle Topics unter "cbs/#" abonniert.');
+            console.log('Alle Topics unter "cbssimulation/#" abonniert.');
         } else {
             console.error('Fehler beim Abonnieren:', err);
         }
     });
 });
 
-// Erlaubte Sensor-Typen an 5. Stelle
+// Erlaubte Sensor-Typen
 const allowedSensors = ['light', 'hum', 'display', 'temp', 'roller_shutter'];
 
-// MQTT-Nachrichten empfangen und in DB speichern
 client.on('message', (topic, message) => {
-  console.log('Nachricht empfangen:', topic, message.toString());
+    //console.log('Nachricht empfangen:', topic, message.toString());
 
-  const parts = topic.split('/');
-  if (parts.length < 5) return; // Sicherstellen, dass genug Teile vorhanden sind
+    const parts = topic.split('/');
+    if (parts.length < 5) return;
 
-  // Filterregel: Prüfen, ob an 5. Stelle ein erlaubter Sensor steht
-  if (!allowedSensors.includes(parts[4]) && !(parts[4] === 'display' && parts.length >= 6 && parts[5] === 'status')) {
-      console.log('Sensor nicht erlaubt oder fehlende Status-Informationen, Nachricht verworfen:', topic);
-      return;
-  }
+    const sensor = parts[4];
+    const isDisplayStatus = (sensor === 'display' && parts[5] === 'status');
 
-  let value;
+    if (!allowedSensors.includes(sensor) && !isDisplayStatus) {
+        console.log('Sensor nicht erlaubt oder unvollständig:', topic);
+        return;
+    }
 
-  if (parts[4] === 'display' && parts.length >= 6 && parts[5] === 'status') {
-      // JSON-String für display verarbeiten
-      try {
-          const jsonData = JSON.parse(message.toString());
-          // Den Wert nach "voltage" extrahieren und in einen Float umwandeln
-          value = parseFloat(jsonData.voltage);
+    // Grundstruktur extrahieren
+    const [schule, geb, stock, raum] = [
+        parts[0],
+        parts[1]?.split('_')[1],
+        parts[2]?.split('_')[1],
+        parts[3]?.split('_')[1]
+    ];
 
-          if (isNaN(value)) {
-              console.log('Ungültiger Wert für Voltage:', jsonData.voltage);
-              return;
-          }
-      } catch (err) {
-          console.log('Fehler beim Verarbeiten des JSON:', err);
-          return;
-      }
-  } else {
-      // Standard-Fall (z.B. cbs/building_a/floor_1/room_18/temp)
-      const [schule, geb, stock, raum, sensor] = [parts[0], parts[1].split('_')[1], parts[2].split('_')[1], parts[3].split('_')[1], parts[4]];
-      value = parseFloat(message);
+    if (!geb || !stock || !raum || !sensor) {
+        console.log('Ungültige Topic-Struktur:', topic);
+        return;
+    }
 
-      if (isNaN(value)) {
-          console.log('Ungültiger Wert für Sensor:', message);
-          return;
-      }
-  }
+    let value;
 
-  // Die Daten in die Datenbank speichern
-  const [schule, geb, stock, raum, sensor] = [parts[0], parts[1].split('_')[1], parts[2].split('_')[1], parts[3].split('_')[1], parts[4]];
+    if (isDisplayStatus) {
+        try {
+            const jsonData = JSON.parse(message.toString());
+            value = parseFloat(jsonData.voltage);
+            if (isNaN(value)) {
+                console.log('Ungültiger Voltage-Wert:', jsonData.voltage);
+                return;
+            }
+        } catch (err) {
+            console.log('Fehler beim JSON-Parsen:', err);
+            return;
+        }
+    } else {
+        value = parseFloat(message);
+        if (isNaN(value)) {
+            console.log('Ungültiger Sensorwert:', message.toString());
+            return;
+        }
+    }
 
-  const query = "INSERT INTO sensordaten_ausgelesen (schule, gebaeude, stockwerk, raum, sensor, value, timestamp) VALUES (?, ?, ?, ?, ?, ?, NOW())";
-  db.query(query, [schule, geb, stock, raum, sensor, value], (err, result) => {
-      if (err) {
-          console.error('Fehler beim Speichern in die DB:', err);
-      } else {
-          console.log('Daten erfolgreich gespeichert:', result.insertId);
-      }
-  });
+    // Zeitprüfung
+    const key = getKey(geb, stock, raum, sensor);
+    const now = Date.now();
+    const lastInsert = lastInsertMap.get(key);
+
+    if (lastInsert && (now - lastInsert < 10 * 60 * 1000)) {
+        //console.log(`Ignoriert: Letzter Eintrag <10min alt für ${key}`);
+        return;
+    }
+
+    // In DB speichern
+    const query = "INSERT INTO sensordaten_ausgelesen (schule, gebaeude, stockwerk, raum, sensor, value, timestamp) VALUES (?, ?, ?, ?, ?, ?, NOW())";
+    db.query(query, [schule, geb, stock, raum, sensor, value], (err, result) => {
+        if (err) {
+            console.error('Fehler beim Speichern in DB:', err);
+        } else {
+            //console.log(`✅ Gespeichert (#${result.insertId}) für ${key}`);
+            lastInsertMap.set(key, now);
+        }
+    });
 });
-
 
 // Express-Server starten
 app.get('/', (req, res) => {
