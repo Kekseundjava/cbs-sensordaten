@@ -1,6 +1,6 @@
-import './App.css';
 import { useState, useEffect } from "react";
 import { SensorDataController } from './Controller.js';
+import './data.css';  // Import the CSS file
 
 function App() {
   // State variables
@@ -14,8 +14,30 @@ function App() {
   const [endtime, setEndTime] = useState("");
   const [text, setText] = useState("");
 
+const tmpdata = "23";
+const tmprain = "23";
+
+  
+
+  const[buildings, setBuildings] = useState([]);
+  
+  const [floors, setFloors] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [sensors, setSensors] = useState([]);
+
+  
+  const [data, setData] = useState([]);
+
+  //const buildings = ["A", "B", "C"]; // Example buildings
+  //const floors = ["E", "1", "2"];
+  //const rooms = ["01", "02"];
+  //const sensors = ["x", "y"];
+
+
   // 1. Methoden definieren, auf die der Controller Zugriff haben soll
-  const setSensorData = (sensorData) => {setBuildings(sensorData.map(element => element.toString()))};
+  const setSensorData = (sensorData) => {
+    setBuildings(sensorData.map(element => element.toString())
+    };
   const setTimeSensorData = (timeSensorData) => {};
   const setWarnungData = (warnungData) => {};
   const setWetterData = (wetterData) => {};
@@ -28,19 +50,39 @@ function App() {
     setWetterData
   });
 
-  const [buildings, setBuildings] = useState([]);
   useEffect(() => {
     // Async function to fetch available buildings
-    const fetchBuildings = async () => {
+    const fetch = async () => {
+        
+        
       const buildingsList = await controller.liefereVerfuegbareGebaeude();
       setBuildings(buildingsList); // Set the buildings in state
-    };
+      
 
-    fetchBuildings(); // Call the async function
-  }, []);
-  const floors = ["E", "1", "2"];
-  const rooms = ["01", "02"];
-  const sensors = ["x", "y"];
+      const floorsList = await controller.liefereVerfuegbareEtagen();
+        setFloors(floorsList); // Set the floors in state
+
+        const roomsList = await controller.liefereVerfuegbareRaeume();
+        setRooms(roomsList); // Set the rooms in state
+
+        const sensorsList = await controller.liefereVerfuegbareSensoren();
+        setSensors(sensorsList); // Set the sensors in state
+        
+        
+        const exampleData = [
+            { id: 1, name: 'Gebäude A', beschreibung: 'Beschreibung A' },
+            { id: 2, name: 'Gebäude B', beschreibung: 'Beschreibung B' },
+            { id: 3, name: 'Gebäude C', beschreibung: 'Beschreibung C' },
+          ];
+          setData(exampleData); // Setze die Beispiel-Daten
+
+
+    };
+    
+
+    fetch(); // Call the async function
+  },[]);
+  
 
   useEffect(() => {
     const concatenatedText = first + second + third + fourth + startdate + enddate + starttime + endtime;
@@ -50,7 +92,7 @@ function App() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <div className="flex gap-4">
-        <div className="left space-y-2">
+        <div className="left">
           <select
             value={first}
             onChange={(e) => setFirst(e.target.value)}
@@ -82,7 +124,7 @@ function App() {
           >
             <option value="">Raum</option>
             {rooms.map((r) => (
-              <option key={r} value={r}>{`Option ${r}`}</option>
+              <option key={r} value={r}>{r}</option>
             ))}
           </select>
 
@@ -94,11 +136,10 @@ function App() {
           >
             <option value="">Sensor</option>
             {sensors.map((s) => (
-              <option key={s} value={s}>{`Option ${s.toUpperCase()}`}</option>
+              <option key={s} value={s}>{s.toUpperCase()}</option>
             ))}
           </select>
 
-          {/* Date and Time Inputs */}
           <input
             type="date"
             id="start"
@@ -131,10 +172,41 @@ function App() {
             disabled={enddate === ""}
             onChange={(e) => setEndTime(e.target.value)}
           />
+          <div className="data-container">
+      {data.map((item) => (
+        <div key={item.id} className="data-box">
+          <h3>{item.name}</h3>
+          <p>{item.beschreibung}</p>
         </div>
+              ))}
+        </div>
+        <div className="export-container">
+        <button
+          onClick={() => {
+            controller.startExport();
+          }}
+          className="export-button"
+        >
+            
+          Export
+        </button>
+        </div>
+        
+    </div>
       </div>
-      <div className="right mt-4">
-        <div className="p-2 border rounded bg-gray-100">{text}</div>
+      <div className="right">
+        <div	className="text-box">
+            <h1>Wetterbericht</h1>
+            Temperatur: {tmpdata} °C
+            <br />
+            Regen: {tmprain} mm
+
+        </div>
+        <div className="warning">
+          <h1>Warnungen</h1>
+          {text}
+        </div>
+        
       </div>
     </div>
   );

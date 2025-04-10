@@ -1,0 +1,46 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  .data-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Abstand zwischen den Kästen */
+    padding: 20px;
+  }
+  
+  .data-box {
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .data-box h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #333;
+  }
+  
+  .data-box p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+  }
+.right{
+    float: right;
+    width: 25%;
+}  
+.left{
+    float: left;
+    width: 75%;
+}
+.export-container{
+    float: right;
+}
+.warning{
+    background-color: red;
+    min-height: 80vh;
+}
