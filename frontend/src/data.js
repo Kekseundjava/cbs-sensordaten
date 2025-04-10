@@ -36,7 +36,7 @@ const tmprain = "23";
 
   // 1. Methoden definieren, auf die der Controller Zugriff haben soll
   const setSensorData = (sensorData) => {
-    setBuildings(sensorData.map(element => element.toString())
+    setBuildings(sensorData.map(element => element.toString()))
     };
   const setTimeSensorData = (timeSensorData) => {};
   const setWarnungData = (warnungData) => {};
