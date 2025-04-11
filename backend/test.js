@@ -7,7 +7,7 @@ const apiUrl = 'http://localhost:5001';
 // Funktion, um GetAllActualData() abzurufen
 async function getAllActualData() {
     try {
-        const response = await axios.get('${apiUrl}/GetAllActualData');
+        const response = await axios.get('http://localhost:5001/GetAllActualData');
         console.log('GetAllActualData Response:', response.data);
     } catch (error) {
         console.error('Fehler beim Abrufen der letzten Sensordaten:', error);
@@ -16,7 +16,7 @@ async function getAllActualData() {
 
 // Funktion, um GetZeitSensorData() abzurufen
 async function getZeitSensorData() {
-    const gebaeude = 'b';
+    const gebaeude = 'c';
     const etage = 'e';
     const raum = '16';
     const sensor = 'display';
@@ -24,7 +24,7 @@ async function getZeitSensorData() {
     const datum_bis = '2025-04-04 23:59:59';
 
     try {
-        const response = await axios.get('${apiUrl}/GetZeitSensorData', {
+        const response = await axios.get('http://localhost:5001/GetZeitSensorData', {
             params: {
                 gebaeude,
                 etage,
@@ -72,11 +72,11 @@ async function main() {
     //await getAllActualData();  // Abrufen der letzten Sensordaten
 
     //console.log('\nRufe GetZeitSensorData ab:');
-    //await getZeitSensorData();  // Abrufen der Sensordaten für das angegebene Gebäude, Etage, Raum, Sensor und Zeitraum
+    await getZeitSensorData();  // Abrufen der Sensordaten für das angegebene Gebäude, Etage, Raum, Sensor und Zeitraum
 
     //Teste Create und Check User mit testuser test123
     //await createUser();
-    await checkUser();
+    //await checkUser();
 }
 
 // Hauptfunktion ausführen

@@ -180,22 +180,43 @@ export class SensorDataController {
             new RoomData(e.Gebaeude, e.Etage, e.Raum, e.Temperatur, e.Luftfeuchtigkeit)
         );
 
-        this.simuliereViewMitRoomData(roomDataList);
+        //this.simuliereViewMitRoomData(roomDataList);
     }
 
     async holeUndVerarbeiteZeitSensorDaten() {
-        const { gebaeude, etage, raum, sensor, datumVon, datumBis } = this.filter;
-
+        const { gebaeude, etage, raum, sensor: auswahlSensor, datumVon, datumBis } = this.filter;
+    
+        // Zuordnung von Anzeige-Text zu Backend-Namen
+        const sensorMap = {
+            'TEMPERATUR': 'temp',
+            'LUFTFEUCHTIGKEIT': 'hum',
+            'LICHT': 'light',
+            'DISPLAY VERBRAUCH': 'display',
+            'ROLLADAEN': 'roller_shutter'
+        };
+    
+        // Umwandlung
+        const sensor = sensorMap[auswahlSensor];
+    
+        if (!sensor) {
+            console.error(`Unbekannter Sensorwert: ${auswahlSensor}`);
+            return;
+        }
+    
         const response = await axios.get('http://localhost:5001/GetZeitSensorData', {
             params: { gebaeude, etage, raum, sensor, datum_von: datumVon, datum_bis: datumBis }
         });
-
+    
+        console.log(response.config);
+        console.log(response.data);
+    
         const zeitSensorDataList = response.data.map(
             d => new ZeitSensorData(d.timestamp, d.value)
         );
-
+    
         this.simuliereViewMitZeitSensorDaten(zeitSensorDataList);
     }
+    
 
     async holeAllActualData() {
         if (this.cachedAllActualData) {
@@ -223,7 +244,8 @@ export class SensorDataController {
             const regen = tag.precipitation;
     
             const wetterData = new WetterData(temperatur, wind, regen);
-    
+            console.log("=== Wetter ===");
+            console.log(wetterData.toString());
             // 👉 Wetterdaten merken
             this.aktuellesWetter = wetterData;
     
@@ -295,19 +317,13 @@ export default SensorDataController;
     await controller.updateView();
     console.log("=== updateView fin ===");
     // Beispielhafte Filterung:
-    controller.setGebaeude("b");
+    controller.setGebaeude("c");
     controller.setEtage("e");
-    console.log("=== Raum ===");
-    const raumListe = await controller.liefereVerfuegbareRaeume();
-    console.log("=== Raum ===");
-    if (raumListe.length > 0) {
-        console.log("=== Raum1 ===");
-        controller.setRaum(raumListe[0]);
-    }
+    controller.setRaum("16");
     //controller.setRaum(await controller.liefereVerfuegbareRaeume[0]);
 
     // Zeitdaten anzeigen (nur wenn Sensor & Datum gesetzt sind)
-    controller.setSensor("Display Verbrauch");
+    controller.setSensor("DISPLAY VERBRAUCH");
     controller.setDatum("2025-04-04 00:00:00", "2025-04-04 23:59:59");
 
     console.log("=== Login ===")
