@@ -65,10 +65,19 @@ const tmprain = "23";
     };
   const setTimeSensorData = (timeSensorData) => {
     setsenData(timeSensorData.map(element => element.toString()))
-
+    const datas = sendata.map(str => {
+        const zeitMatch = str.match(/Zeit=([^,]+)/);
+        const wertMatch = str.match(/Wert=(\d+)/);
+  
+        return {
+          Zeit: zeitMatch ? zeitMatch[1].trim() : '',
+          Wert: wertMatch ? Number(wertMatch[1]) : null,
+        };
+    })
+    setFormattedData(datas);
     };
   const setWarnungData = (warnungData) => {setwarnData(warnungData.map(element => element.toString()))};
-  const setWetterData = (wetterData) => {};
+  const setWetterData = (wetterData) => {setwetData(wetterData.map(element => element.toString()))};
   const setDebug = (text) => {
     setdebugdata(text)
   };
@@ -243,18 +252,19 @@ const tmprain = "23";
           Export
         </button>
         <LineChart
-      width={500}
-      height={300}
-      data={data}
-      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-    >
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="name" />
-      <YAxis />
-      <Tooltip />
-      <Legend />
-      <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} />
-    </LineChart>
+            width={500}
+            height={300}
+            data={formattedData}  // <-- HIER!
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="Zeit" />        {/* Muss dem Key im formattedData entsprechen */}
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="Wert" stroke="#8884d8" strokeWidth={2} />
+        </LineChart>
+
         </div>
         
     </div>
