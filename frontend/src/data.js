@@ -79,7 +79,7 @@ const tmprain = "23";
 }
     };
   const setWarnungData = (warnungData) => {setwarnData(warnungData.map(element => element.toString()))};
-  const setWetterData = (wetterData) => {setwetData(wetterData.map(element => element.toString()))};
+  const setWetterData = (wetterData) => {setwetData(wetterData)};
   const setDebug = (text) => {
     setdebugdata(text)
   };
@@ -278,7 +278,10 @@ const tmprain = "23";
       <div className="right">
         <div	className="text-box">
             <h1>Wetterbericht</h1>
-            {wetdata}
+            <p>temperatur: {wetdata.temperatur/10}°C</p> 
+            <p>windstärke: {wetdata.wind}</p>
+            <p>regen: {wetdata.regen}</p>
+
             <br />
 
         </div>
