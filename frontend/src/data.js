@@ -72,7 +72,6 @@ const tmprain = "23";
   const setDebug = (text) => {
     setdebugdata(text)
   };
-};
 
   // 2. Controller erzeugen und Methoden übergeben
   const controller = new SensorDataController({
@@ -241,7 +240,7 @@ const tmprain = "23";
         <LineChart
       width={500}
       height={300}
-      data={formattedData}
+      data={data}
       margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
     >
       <CartesianGrid strokeDasharray="3 3" />
@@ -269,7 +268,7 @@ const tmprain = "23";
               <h3>{item}</h3>
             </div>
           ))}
-          {text}
+          {debugdata}
         </div>
         
       </div>
