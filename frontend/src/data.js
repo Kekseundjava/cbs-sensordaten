@@ -17,6 +17,8 @@ function App() {
 const tmpdata = "23";
 const tmprain = "23";
 
+    // ONChange send to controller specific data
+
   
 
   const[buildings, setBuildings] = useState([]);
@@ -26,7 +28,11 @@ const tmprain = "23";
   const [sensors, setSensors] = useState([]);
 
   
-  const [data, setData] = useState([]);
+  const [sendata, setsenData] = useState([]);
+    const [data, setData] = useState([]);
+  const [wetdata, setwetData] = useState([]);
+  const [timesendata, settimesensenData] = useState([]);
+  const [warndata, setwarnData] = useState([]);
 
   //const buildings = ["A", "B", "C"]; // Example buildings
   //const floors = ["E", "1", "2"];
@@ -36,11 +42,11 @@ const tmprain = "23";
 
   // 1. Methoden definieren, auf die der Controller Zugriff haben soll
   const setSensorData = (sensorData) => {
-    setBuildings(sensorData.map(element => element.toString()))
+    setsenData(sensorData.map(element => element.toString()))
     };
-  const setTimeSensorData = (timeSensorData) => {};
-  const setWarnungData = (warnungData) => {};
-  const setWetterData = (wetterData) => {};
+  const setTimeSensorData = (timeSensorData) => {setsenData(timeSensorData.map(element => element.toString()))};
+  const setWarnungData = (warnungData) => {warndata.map(element => element.toString())};
+  const setWetterData = (wetterData) => {wetdata.map(element => element.toString())};
 
   // 2. Controller erzeugen und Methoden übergeben
   const controller = new SensorDataController({
@@ -67,14 +73,9 @@ const tmprain = "23";
 
         const sensorsList = await controller.liefereVerfuegbareSensoren();
         setSensors(sensorsList); // Set the sensors in state
+
         
-        
-        const exampleData = [
-            { id: 1, name: 'Gebäude A', beschreibung: 'Beschreibung A' },
-            { id: 2, name: 'Gebäude B', beschreibung: 'Beschreibung B' },
-            { id: 3, name: 'Gebäude C', beschreibung: 'Beschreibung C' },
-          ];
-          setData(exampleData); // Setze die Beispiel-Daten
+
 
 
     };
@@ -85,6 +86,13 @@ const tmprain = "23";
   
 
   useEffect(() => {
+    controller.setGebaeude(first);
+    controller.setEtage(second);
+    controller.setRaum(third);
+  controller.setSensor(fourth);
+  controller.setDatum(startdate +" " + starttime + ":00" , enddate +" " + endtime + ":00");
+      controller.setDatum(startdate, enddate);
+
     const concatenatedText = first + second + third + fourth + startdate + enddate + starttime + endtime;
     setText(concatenatedText);
   }, [first, second, third, fourth, startdate, enddate, starttime, endtime]);
@@ -96,7 +104,7 @@ const tmprain = "23";
           <select
             value={first}
             onChange={(e) => setFirst(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="selects"
           >
             <option value="">Gebäude</option>
             {buildings.map((b) => (
@@ -108,7 +116,7 @@ const tmprain = "23";
             value={second}
             onChange={(e) => setSecond(e.target.value)}
             disabled={!first}
-            className="w-full p-2 border rounded disabled:opacity-50"
+            className="selects"
           >
             <option value="">Etage</option>
             {floors.map((f) => (
@@ -119,7 +127,7 @@ const tmprain = "23";
           <select
             value={third}
             onChange={(e) => setThird(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="selects"
             disabled={!second}
           >
             <option value="">Raum</option>
@@ -131,7 +139,7 @@ const tmprain = "23";
           <select
             value={fourth}
             onChange={(e) => setFourth(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="selects"
             disabled={!third}
           >
             <option value="">Sensor</option>
@@ -172,13 +180,12 @@ const tmprain = "23";
             disabled={enddate === ""}
             onChange={(e) => setEndTime(e.target.value)}
           />
-          <div className="data-container">
-      {data.map((item) => (
-        <div key={item.id} className="data-box">
-          <h3>{item.name}</h3>
-          <p>{item.beschreibung}</p>
-        </div>
-              ))}
+        <div className="data-container">
+            {sendata.map((item, index) => (
+                <div className="data-box" key={index}>
+                <h3>{ item}</h3>
+                </div>
+            ))}
         </div>
         <div className="export-container">
         <button

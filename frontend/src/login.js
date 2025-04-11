@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './login.css';  // Import the CSS file
+import { SensorDataController } from './Controller.js';
+
 //import './Contoller.js';
 
 function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [text, settext] = useState('');
   const navigate = useNavigate();
+  const controller = new SensorDataController({});
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
 
     e.preventDefault();
-    onLogin(username, password);
-    navigate('/data');
+    if(await controller.tryLogin(username, password) == true){
+        onLogin(username, password);
+        navigate('/data');
+    }
+    else{
+        settext("Wrong username or password");
+    }
   };
 
   return (
@@ -37,6 +46,9 @@ function Login({ onLogin }) {
             />
           </div>
           <button type="submit">Login</button>
+            <div className="error-message">
+                {text}
+            </div>
         </form>
       </div>
     </div>

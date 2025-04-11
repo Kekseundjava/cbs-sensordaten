@@ -8,6 +8,8 @@ html, body {
     flex-direction: column;
     gap: 20px; /* Abstand zwischen den Kästen */
     padding: 20px;
+    overflow-y: auto;
+    max-height: 600px;
   }
   
   .data-box {
@@ -43,4 +45,8 @@ html, body {
 .warning{
     background-color: red;
     min-height: 80vh;
+}
+
+.selects{
+    padding: 10px;
 }
