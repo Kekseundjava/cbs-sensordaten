@@ -16,6 +16,8 @@ function App() {
   const [starttime, setStartTime] = useState("");
   const [endtime, setEndTime] = useState("");
   const [text, setText] = useState("");
+  const [formattedData, setFormattedData] = useState([]);
+
 
   // TODO Zeit, Warnung, Wetter, Linechart
 
@@ -24,12 +26,8 @@ function App() {
     ['B', 20],
     ['C', 50],
   ];
-  /*
-  const formattedData = dataArray.slice(1).map(row => ({
-    Zeit: row[0],
-    Wert: row[1],
-  }));
-*/
+
+  
 
 const tmpdata = "23";
 const tmprain = "23";
@@ -61,12 +59,14 @@ const tmprain = "23";
 
   // 1. Methoden definieren, auf die der Controller Zugriff haben soll
   const setSensorData = (sensorData) => {
-    setsenData(sensorData.map(element => element.toString()))
+    if(startdate==""|| enddate==""||starttime==""||endtime==""){
+        setsenData(sensorData.map(element => element.toString()))
+    }
     };
   const setTimeSensorData = (timeSensorData) => {
     setsenData(timeSensorData.map(element => element.toString()))
-    setwetData(timeSensorData[0].toString())
-};
+
+    };
   const setWarnungData = (warnungData) => {setwarnData(warnungData.map(element => element.toString()))};
   const setWetterData = (wetterData) => {};
   const setDebug = (text) => {
