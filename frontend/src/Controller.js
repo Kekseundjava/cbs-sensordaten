@@ -53,12 +53,31 @@ export class SensorDataController {
         let exportData = [];
 
         if (sensor && datumVon && datumBis) {
+
+            // Zuordnung von Anzeige-Text zu Backend-Namen
+            const sensorMap = {
+                'Temperatur': 'temp',
+                'Luftfeuchtigkeit': 'hum',
+                'Licht': 'light',
+                'Display Verbrauch': 'display',
+                'Rolladaen': 'roller_shutter'
+            };
+
+            // Umwandlung
+            const sensor1 = sensorMap[sensor];
+
+            if (!sensor1) {
+                console.error(`Unbekannter Sensorwert: ${sensor1}`);
+                return;
+            }
+            
             // Zeitdaten exportieren
             const response = await axios.get('http://localhost:5001/GetZeitSensorData', {
-                params: { gebaeude, etage, raum, sensor, datum_von: datumVon, datum_bis: datumBis }
+                params: { gebaeude, etage, raum, sensor: sensor1, datum_von: datumVon, datum_bis: datumBis }
             });
 
             exportData = response.data.map(d => `${d.timestamp}, ${d.value}`);
+            
         } else {
             // Aktuelle Raumdaten exportieren
             const data = await this.holeAllActualData();

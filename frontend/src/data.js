@@ -230,6 +230,11 @@ const tmprain = "23";
         <div className="export-container">
         <button
           onClick={() => {
+            controller.setGebaeude(first);
+            controller.setEtage(second);
+            controller.setRaum(third);
+            controller.setSensor(fourth);
+            controller.setDatum(startdate + " " + starttime + ":00", enddate + " " + endtime + ":00");
             controller.startExport();
           }}
           className="export-button"
