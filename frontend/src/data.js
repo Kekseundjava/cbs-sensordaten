@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { SensorDataController } from './Controller.js';
 import './data.css';  // Import the CSS file
+import {
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  } from 'recharts';
 
 function App() {
   // State variables
@@ -14,8 +17,21 @@ function App() {
   const [endtime, setEndTime] = useState("");
   const [text, setText] = useState("");
 
+  const dataArray = [
+    ['name', 'value'],
+    ['A', 30],
+    ['B', 20],
+    ['C', 50],
+  ];
+  const formattedData = dataArray.slice(1).map(row => ({
+    [dataArray[0][0]]: row[0],
+    [dataArray[0][1]]: row[1],
+  }));
+
+
 const tmpdata = "23";
 const tmprain = "23";
+//
 
     // ONChange send to controller specific data
 
@@ -30,7 +46,7 @@ const tmprain = "23";
   
   const [sendata, setsenData] = useState([]);
     const [data, setData] = useState([]);
-  const [wetdata, setwetData] = useState([]);
+  const [wetdata, setwetData] = useState("test");
   const [timesendata, settimesensenData] = useState([]);
   const [warndata, setwarnData] = useState([]);
 
@@ -44,9 +60,12 @@ const tmprain = "23";
   const setSensorData = (sensorData) => {
     setsenData(sensorData.map(element => element.toString()))
     };
-  const setTimeSensorData = (timeSensorData) => {setsenData(timeSensorData.map(element => element.toString()))};
-  const setWarnungData = (warnungData) => {warndata.map(element => element.toString())};
-  const setWetterData = (wetterData) => {wetdata.map(element => element.toString())};
+  const setTimeSensorData = (timeSensorData) => {
+    setsenData(timeSensorData.map(element => element.toString()))
+    setwetData(timeSensorData[0].toString())};
+  const setWarnungData = (warnungData) => {setwarnData(warnungData.map(element => element.toString()))};
+  const setWetterData = (wetterData) => {;
+};
 
   // 2. Controller erzeugen und Methoden übergeben
   const controller = new SensorDataController({
@@ -74,10 +93,6 @@ const tmprain = "23";
         const sensorsList = await controller.liefereVerfuegbareSensoren();
         setSensors(sensorsList); // Set the sensors in state
 
-        
-
-
-
     };
     
 
@@ -89,12 +104,30 @@ const tmprain = "23";
     controller.setGebaeude(first);
     controller.setEtage(second);
     controller.setRaum(third);
-  controller.setSensor(fourth);
-  controller.setDatum(startdate +" " + starttime + ":00" , enddate +" " + endtime + ":00");
-      controller.setDatum(startdate, enddate);
+    controller.setSensor(fourth);
+    controller.setDatum(startdate +" " + starttime + ":00" , enddate + " " + endtime + ":00");
 
     const concatenatedText = first + second + third + fourth + startdate + enddate + starttime + endtime;
     setText(concatenatedText);
+    const fetch = async () => {
+        
+        
+        const buildingsList = await controller.liefereVerfuegbareGebaeude();
+        setBuildings(buildingsList); // Set the buildings in state
+        
+  
+        const floorsList = await controller.liefereVerfuegbareEtagen();
+          setFloors(floorsList); // Set the floors in state
+  
+          const roomsList = await controller.liefereVerfuegbareRaeume();
+          setRooms(roomsList); // Set the rooms in state
+  
+          const sensorsList = await controller.liefereVerfuegbareSensoren();
+          setSensors(sensorsList); // Set the sensors in state
+      };
+      
+  
+      fetch(); // Call the async function
   }, [first, second, third, fourth, startdate, enddate, starttime, endtime]);
 
   return (
@@ -197,6 +230,19 @@ const tmprain = "23";
             
           Export
         </button>
+        <LineChart
+      width={500}
+      height={300}
+      data={formattedData}
+      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Legend />
+      <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} />
+    </LineChart>
         </div>
         
     </div>
@@ -204,13 +250,17 @@ const tmprain = "23";
       <div className="right">
         <div	className="text-box">
             <h1>Wetterbericht</h1>
-            Temperatur: {tmpdata} °C
+            {wetdata}
             <br />
-            Regen: {tmprain} mm
 
         </div>
         <div className="warning">
           <h1>Warnungen</h1>
+          {warndata.map((item, index) => (
+            <div className="warning-box" key={index}>
+              <h3>{item}</h3>
+            </div>
+          ))}
           {text}
         </div>
         
