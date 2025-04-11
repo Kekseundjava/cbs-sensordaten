@@ -279,8 +279,8 @@ const tmprain = "23";
         <div	className="text-box">
             <h1>Wetterbericht</h1>
             <p>temperatur: {wetdata.temperatur/10}°C</p> 
-            <p>windstärke: {wetdata.wind}</p>
-            <p>regen: {wetdata.regen}</p>
+            <p>windstärke: {wetdata.wind/10}km/h</p>
+            <p>regen: {wetdata.regen/10}mm</p>
 
             <br />
 
