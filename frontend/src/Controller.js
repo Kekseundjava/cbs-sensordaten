@@ -51,29 +51,29 @@ export class SensorDataController {
     async startExport() {
         const { gebaeude, etage, raum, sensor, datumVon, datumBis } = this.filter;
         let exportData = [];
-    
+
         if (sensor && datumVon && datumBis) {
             // Zeitdaten exportieren
             const response = await axios.get('http://localhost:5001/GetZeitSensorData', {
                 params: { gebaeude, etage, raum, sensor, datum_von: datumVon, datum_bis: datumBis }
             });
-    
+
             exportData = response.data.map(d => `${d.timestamp}, ${d.value}`);
         } else {
             // Aktuelle Raumdaten exportieren
             const data = await this.holeAllActualData();
-    
+
             const gefiltert = data.filter(entry =>
                 (!gebaeude || entry.Gebaeude === gebaeude) &&
                 (!etage || entry.Etage === etage) &&
                 (!raum || entry.Raum === raum)
             );
-    
+
             exportData = gefiltert.map(entry =>
                 `Gebäude: ${entry.Gebaeude}, Etage: ${entry.Etage}, Raum: ${entry.Raum}, Temperatur: ${entry.Temperatur}, Luftfeuchtigkeit: ${entry.Luftfeuchtigkeit}`
             );
         }
-    
+
         // Datei erzeugen & herunterladen
         const blob = new Blob([exportData.join('\n')], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
@@ -187,38 +187,38 @@ export class SensorDataController {
 
     async holeUndVerarbeiteZeitSensorDaten() {
         const { gebaeude, etage, raum, sensor: auswahlSensor, datumVon, datumBis } = this.filter;
-    
+
         // Zuordnung von Anzeige-Text zu Backend-Namen
         const sensorMap = {
-            'TEMPERATUR': 'temp',
-            'LUFTFEUCHTIGKEIT': 'hum',
-            'LICHT': 'light',
-            'DISPLAY VERBRAUCH': 'display',
-            'ROLLADAEN': 'roller_shutter'
+            'Temperatur': 'temp',
+            'Luftfeuchtigkeit': 'hum',
+            'Licht': 'light',
+            'Display Verbrauch': 'display',
+            'Rolladaen': 'roller_shutter'
         };
-    
+
         // Umwandlung
         const sensor = sensorMap[auswahlSensor];
-    
+
         if (!sensor) {
             console.error(`Unbekannter Sensorwert: ${auswahlSensor}`);
             return;
         }
-    
-        const response = await axios.get('http://localhost:5001/GetZeitSensorData', {
-            params: { gebaeude, etage, raum, sensor, datum_von: datumVon, datum_bis: datumBis }
-        });
-    
-        console.log(response.config);
-        console.log(response.data);
-    
-        const zeitSensorDataList = response.data.map(
-            d => new ZeitSensorData(d.timestamp, d.value)
-        );
-    
-        this.simuliereViewMitZeitSensorDaten(zeitSensorDataList);
+        try {
+            const response = await axios.get('http://localhost:5001/GetZeitSensorData', {
+                params: { gebaeude, etage, raum, sensor, datum_von: datumVon, datum_bis: datumBis }
+            });
+
+            const zeitSensorDataList = response.data.map(
+                d => new ZeitSensorData(d.timestamp, d.value)
+            );
+
+            this.view.setTimeSensorData(zeitSensorDataList);
+        } catch (error) {
+            this.view.setDebug(`Fehler beim Datenabruf: ${error.message}`);
+        }
     }
-    
+
 
     async holeAllActualData() {
         if (this.cachedAllActualData) {
@@ -235,47 +235,47 @@ export class SensorDataController {
             const response = await axios.get('https://app-prod-ws.warnwetter.de/v30/stationOverviewExtended', {
                 params: { stationIds: 10515 }
             });
-            
+
             const wetter = response.data["10515"];
             const tag = wetter?.days?.[0];
-    
+
             if (!tag) return;
-    
+
             const temperatur = tag.temperatureMax;
             const wind = tag.windSpeed;
             const regen = tag.precipitation;
-    
+
             const wetterData = new WetterData(temperatur, wind, regen);
-            
+
             // 👉 Wetterdaten merken
             this.aktuellesWetter = wetterData;
-    
+
             this.view.setWetterData(wetterData);
-    
+
         } catch (error) {
             console.error("Fehler beim Laden der Wetterdaten:", error);
         }
     }
-    
+
     async holeUndVerarbeiteWarnungen() {
         const daten = await this.holeAllActualData();
         const warnungen = [];
-    
+
         const aktuelleStunde = new Date().getHours();
-    
+
         // 👉 Windgeschwindigkeit aus gemerkten Wetterdaten lesen
         const windGeschwindigkeit = parseInt(this.aktuellesWetter?.wind || 0);
-    
+
         daten.forEach(entry => {
             const { Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, Licht, RolladenUnten } = entry;
-    
+
             // Warnung: Licht nach 16 Uhr noch an
             if (aktuelleStunde >= 16 && Licht === true) {
                 warnungen.push(
                     new WarnungData(Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, "Licht ist nach 16 Uhr noch eingeschaltet.")
                 );
             }
-    
+
             // Warnung: Rolladen unten + starker Wind
             if (RolladenUnten === true && windGeschwindigkeit >= 50) {
                 warnungen.push(
@@ -283,7 +283,7 @@ export class SensorDataController {
                 );
             }
         });
-    
+
         this.view.setWarnungData(warnungen);
     }
     //#endregion
