@@ -17,64 +17,37 @@ function App() {
   const [endtime, setEndTime] = useState("");
   const [text, setText] = useState("");
   const [formattedData, setFormattedData] = useState([]);
-
-
-  // TODO Zeit, Warnung, Wetter, Linechart
-
-  const dataArray = [
-    ['A', 30],
-    ['B', 20],
-    ['C', 50],
-  ];
-
-  
-
-const tmpdata = "23";
-const tmprain = "23";
-//
-
-    // ONChange send to controller specific data
-
-  
-
   const[buildings, setBuildings] = useState([]);
-  
   const [floors, setFloors] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [sensors, setSensors] = useState([]);
-
-  
   const [sendata, setsenData] = useState([]);
-    const [data, setData] = useState([]);
+  const [data, setData] = useState([]);
   const [wetdata, setwetData] = useState("test");
   const [debugdata, setdebugdata] = useState("");
   const [timesendata, settimesensenData] = useState([]);
   const [warndata, setwarnData] = useState([]);
 
-  //const buildings = ["A", "B", "C"]; // Example buildings
-  //const floors = ["E", "1", "2"];
-  //const rooms = ["01", "02"];
-  //const sensors = ["x", "y"];
 
-
-  // 1. Methoden definieren, auf die der Controller Zugriff haben soll
+  // 1. Define Methods for the Controller
   const setSensorData = (sensorData) => {
-    if(startdate==""|| enddate==""||starttime==""||endtime==""){
+    if(startdate==""|| enddate==""||starttime==""||endtime==""){ //so that the data doesnt overwrite
         setsenData(sensorData.map(element => element.toString()))
     }
     };
+
   const setTimeSensorData = (timeSensorData) => {
-    if(startdate!=""&& enddate!=""&&starttime!=""&&endtime!=""){
-    setsenData(timeSensorData.map(element => element.toString()))
-    const datas = sendata.map(str => {
-        const zeitMatch = str.match(/Zeit=([^,]+)/);
-        const wertMatch = str.match(/Wert=(\d+)/);
-  
-        return {
-          Zeit: zeitMatch ? zeitMatch[1].trim() : '',
-          Wert: wertMatch ? Number(wertMatch[1]) : null,
-        };
-    })
+    if(startdate!=""&& enddate!=""&&starttime!=""&&endtime!=""){ 
+        setsenData(timeSensorData.map(element => element.toString()))
+        const datas = sendata.map(str => { //formats it for the chart
+            const zeitMatch = str.match(/Zeit=([^,]+)/);
+            const wertMatch = str.match(/Wert=(\d+)/);
+    
+            return {
+            Zeit: zeitMatch ? zeitMatch[1].trim() : '',
+            Wert: wertMatch ? Number(wertMatch[1]) : null,
+            };
+        })
     setFormattedData(datas);
 }
     };
@@ -92,31 +65,6 @@ const tmprain = "23";
     setWetterData,
     setDebug
   });
-
-  useEffect(() => {
-    // Async function to fetch available buildings
-    const fetch = async () => {
-        
-        
-      const buildingsList = await controller.liefereVerfuegbareGebaeude();
-      setBuildings(buildingsList); // Set the buildings in state
-      
-
-      const floorsList = await controller.liefereVerfuegbareEtagen();
-        setFloors(floorsList); // Set the floors in state
-
-        const roomsList = await controller.liefereVerfuegbareRaeume();
-        setRooms(roomsList); // Set the rooms in state
-
-        const sensorsList = await controller.liefereVerfuegbareSensoren();
-        setSensors(sensorsList); // Set the sensors in state
-
-    };
-    
-
-    fetch(); // Call the async function
-  },[]);
-  
 
   useEffect(() => {
     controller.setGebaeude(first);
