@@ -64,6 +64,7 @@ const tmprain = "23";
     }
     };
   const setTimeSensorData = (timeSensorData) => {
+    if(startdate!=""&& enddate!=""&&starttime!=""&&endtime!=""){
     setsenData(timeSensorData.map(element => element.toString()))
     const datas = sendata.map(str => {
         const zeitMatch = str.match(/Zeit=([^,]+)/);
@@ -75,6 +76,7 @@ const tmprain = "23";
         };
     })
     setFormattedData(datas);
+}
     };
   const setWarnungData = (warnungData) => {setwarnData(warnungData.map(element => element.toString()))};
   const setWetterData = (wetterData) => {setwetData(wetterData.map(element => element.toString()))};
@@ -229,6 +231,7 @@ const tmprain = "23";
             disabled={enddate === ""}
             onChange={(e) => setEndTime(e.target.value)}
           />
+          {formattedData.length==0 ?(
         <div className="data-container">
             {sendata.map((item, index) => (
                 <div className="data-box" key={index}>
@@ -236,6 +239,21 @@ const tmprain = "23";
                 </div>
             ))}
         </div>
+        ): (
+            <LineChart
+            width={1000}
+            height={500}
+            data={formattedData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+            <CartesianGrid strokeDasharray="5 5" />
+            <XAxis dataKey="Zeit" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="Wert" stroke="#8884d8" strokeWidth={2} />
+        </LineChart>
+        )}
         <div className="export-container">
         <button
           onClick={() => {
@@ -251,20 +269,7 @@ const tmprain = "23";
             
           Export
         </button>
-        <LineChart
-            width={500}
-            height={300}
-            data={formattedData}  // <-- HIER!
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="Zeit" />        {/* Muss dem Key im formattedData entsprechen */}
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="Wert" stroke="#8884d8" strokeWidth={2} />
-        </LineChart>
-
+        
         </div>
         
     </div>
