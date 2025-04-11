@@ -1,14 +1,16 @@
 
 import axios from 'axios';
+// Importiere die Datenklassen
 const RoomData = require('./RoomData');
 const ZeitSensorData = require('./ZeitSensorData');
 const WetterData = require('./WetterData');
 const WarnungData = require('./WarnungData');
 
-
+// Hauptklasse zur Steuerung der Sensor-Datenanzeige
 export class SensorDataController {
     //#region Konstruktor
     constructor(viewMethods) {
+        // Filter, die von der View gesetzt werden
         this.filter = {
             gebaeude: null,
             etage: null,
@@ -18,10 +20,11 @@ export class SensorDataController {
             datumBis: null
         };
         this.view = viewMethods;
-        this.cachedAllActualData = null;
+        this.cachedAllActualData = null; // Cache für aktuelle Sensordaten
     }
     //#endregion
     //#region EventHandler
+    // Setzt das gewählte Gebäude
     setGebaeude(value) {
         this.filter.gebaeude = value;
         this.updateView();
@@ -48,14 +51,17 @@ export class SensorDataController {
         this.updateView();
     }
 
+    // Exportiert entweder Zeitdaten oder aktuelle Raumdaten
     async startExport() {
         const { gebaeude, etage, raum, sensor, datumVon, datumBis } = this.filter;
         let exportData = [];
 
+        // Wenn Sensor UND Zeitspanne angegeben sind: Zeitdaten exportieren
         if (sensor && datumVon && datumBis) {
 
             // Zuordnung von Anzeige-Text zu Backend-Namen
             const sensorMap = {
+                // Mapping von UI-Sensornamen zu API-Namen
                 'Temperatur': 'temp',
                 'Luftfeuchtigkeit': 'hum',
                 'Licht': 'light',
@@ -76,10 +82,11 @@ export class SensorDataController {
                 params: { gebaeude, etage, raum, sensor: sensor1, datum_von: datumVon, datum_bis: datumBis }
             });
 
+            // Formatierung der Daten
             exportData = response.data.map(d => `${d.timestamp}, ${d.value}`);
 
         } else {
-            // Aktuelle Raumdaten exportieren
+            // Ansonsten: aktuelle Raumdaten exportieren
             const data = await this.holeAllActualData();
 
             const gefiltert = data.filter(entry =>
@@ -93,7 +100,7 @@ export class SensorDataController {
             );
         }
 
-        // Datei erzeugen & herunterladen
+        // Exportdatei erzeugen und Download anstoßen
         const blob = new Blob([exportData.join('\n')], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -107,6 +114,7 @@ export class SensorDataController {
 
     //#endregion
     //#region Public Methodes    
+    // Login-Funktion (true/false)
     async tryLogin(name, password) {
         try {
             const response = await axios.post(`http://localhost:5001/checkUser`, {
@@ -121,11 +129,13 @@ export class SensorDataController {
         }
     }
 
+    // Liste der verfügbaren Gebäude
     async liefereVerfuegbareGebaeude() {
         const daten = await this.holeAllActualData();
         return [...new Set(daten.map(e => e.Gebaeude))];
     }
 
+    // Liste der Etagen, gefiltert nach Gebäude
     async liefereVerfuegbareEtagen() {
         const daten = await this.holeAllActualData();
         const { gebaeude } = this.filter;
@@ -137,6 +147,7 @@ export class SensorDataController {
         return [...new Set(gefiltert.map(e => e.Etage))];
     }
 
+    // Liste der Räume, gefiltert nach Gebäude & Etage
     async liefereVerfuegbareRaeume() {
         const daten = await this.holeAllActualData();
         const { gebaeude, etage } = this.filter;
@@ -149,6 +160,7 @@ export class SensorDataController {
         return [...new Set(gefiltert.map(e => e.Raum))];
     }
 
+    // Liste der Sensorarten im gewählten Raum
     async liefereVerfuegbareSensoren() {
         const daten = await this.holeAllActualData();
         const { gebaeude, etage, raum } = this.filter;
@@ -174,6 +186,7 @@ export class SensorDataController {
 
     //#endregion
     //#region Internal Methodes
+    // Aktualisiert die View basierend auf den Filtern
     async updateView() {
         const { sensor, datumVon, datumBis } = this.filter;
 
@@ -186,6 +199,7 @@ export class SensorDataController {
         await this.holeUndVerarbeiteWarnungen();
     }
 
+    // Holt aktuelle Raumdaten und verarbeitet sie
     async holeUndVerarbeiteAllActualData() {
         const { gebaeude, etage, raum } = this.filter;
         const data = await this.holeAllActualData();
@@ -219,6 +233,7 @@ export class SensorDataController {
         this.view.setSensorData(roomDataList);
     }
 
+    // Holt Zeitreihen-Daten (wenn Sensor & Zeit gesetzt)
     async holeUndVerarbeiteZeitSensorDaten() {
         const { gebaeude, etage, raum, sensor: auswahlSensor, datumVon, datumBis } = this.filter;
 
@@ -253,7 +268,7 @@ export class SensorDataController {
         }
     }
 
-
+    // Holt alle aktuellen Sensordaten
     async holeAllActualData() {
         if (this.cachedAllActualData) {
             return this.cachedAllActualData;
@@ -264,6 +279,7 @@ export class SensorDataController {
         return this.cachedAllActualData;
     }
 
+    // Holt und verarbeitet aktuelle Wetterdaten
     async holeUndVerarbeiteWetterdaten() {
         const response = await axios.get('http://localhost:5001/GetWetterData');
 
@@ -274,6 +290,7 @@ export class SensorDataController {
         this.view.setWetterData(wetterData);
     }
 
+    // Analysiert Daten & erzeugt Warnungen bei bestimmten Bedingungen
     async holeUndVerarbeiteWarnungen() {
         const daten = await this.holeAllActualData();
         const warnungen = [];
@@ -307,50 +324,5 @@ export class SensorDataController {
         this.view.setWarnungData(warnungen);
     }
     //#endregion
-    //#region View Simulation
-
-    simuliereViewMitRoomData(roomDataList) {
-        console.log("=== Raumdaten (gefiltert) ===");
-        if (roomDataList.length === 0) {
-            console.log("Keine Daten gefunden.");
-        } else {
-            roomDataList.forEach(d => console.log(d.toString()));
-        }
-    }
-
-    simuliereViewMitZeitSensorDaten(sensorDataList) {
-        console.log("=== Zeit-Sensor-Daten ===");
-        if (sensorDataList.length === 0) {
-            console.log("Keine Zeitdaten gefunden.");
-        } else {
-            sensorDataList.forEach(d => console.log(d.toString()));
-        }
-    }
-
-    //#endregion
 }
 export default SensorDataController;
-
-/*// Beispielnutzung:
-(async () => {
-    const controller = new SensorDataController();
-
-    // Anfang: alles anzeigen
-    await controller.updateView();
-
-    // Beispielhafte Filterung:
-    controller.setGebaeude("b");
-    controller.setEtage("e");
-    console.log("=== Raum ===");
-    const raumListe = await controller.liefereVerfuegbareRaeume();
-    console.log("=== Raum ===");
-    if (raumListe.length > 0) {
-        console.log("=== Raum1 ===");
-        controller.setRaum(raumListe[0]);
-    }
-    //controller.setRaum(await controller.liefereVerfuegbareRaeume[0]);
-
-    // Zeitdaten anzeigen (nur wenn Sensor & Datum gesetzt sind)
-    controller.setSensor("Display Verbrauch");
-    controller.setDatum("2025-04-04 00:00:00", "2025-04-04 23:59:59");
-})();*/
