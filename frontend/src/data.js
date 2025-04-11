@@ -17,17 +17,19 @@ function App() {
   const [endtime, setEndTime] = useState("");
   const [text, setText] = useState("");
 
+  // TODO Zeit, Warnung, Wetter, Linechart
+
   const dataArray = [
-    ['name', 'value'],
     ['A', 30],
     ['B', 20],
     ['C', 50],
   ];
+  /*
   const formattedData = dataArray.slice(1).map(row => ({
-    [dataArray[0][0]]: row[0],
-    [dataArray[0][1]]: row[1],
+    Zeit: row[0],
+    Wert: row[1],
   }));
-
+*/
 
 const tmpdata = "23";
 const tmprain = "23";
@@ -47,6 +49,7 @@ const tmprain = "23";
   const [sendata, setsenData] = useState([]);
     const [data, setData] = useState([]);
   const [wetdata, setwetData] = useState("test");
+  const [debugdata, setdebugdata] = useState("");
   const [timesendata, settimesensenData] = useState([]);
   const [warndata, setwarnData] = useState([]);
 
@@ -62,9 +65,13 @@ const tmprain = "23";
     };
   const setTimeSensorData = (timeSensorData) => {
     setsenData(timeSensorData.map(element => element.toString()))
-    setwetData(timeSensorData[0].toString())};
+    setwetData(timeSensorData[0].toString())
+};
   const setWarnungData = (warnungData) => {setwarnData(warnungData.map(element => element.toString()))};
-  const setWetterData = (wetterData) => {;
+  const setWetterData = (wetterData) => {};
+  const setDebug = (text) => {
+    setdebugdata(text)
+  };
 };
 
   // 2. Controller erzeugen und Methoden übergeben
@@ -72,7 +79,8 @@ const tmprain = "23";
     setSensorData,
     setTimeSensorData,
     setWarnungData,
-    setWetterData
+    setWetterData,
+    setDebug
   });
 
   useEffect(() => {
