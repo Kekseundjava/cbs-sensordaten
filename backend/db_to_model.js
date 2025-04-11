@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
+const axios = require('axios');
 
 
 // Express-App erstellen
@@ -192,4 +193,33 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
     console.log(`Backend läuft auf http://localhost:${port}`);
+});
+
+app.get('/GetWetterData', async (req, res) => {
+    try {
+        const response = await axios.get('https://app-prod-ws.warnwetter.de/v30/stationOverviewExtended', {
+            params: { stationIds: 10515 }
+        });
+
+        const wetter = response.data["10515"];
+        const tag = wetter?.days?.[0];
+
+        if (!tag) {
+            return res.status(404).json({ error: "Keine Wetterdaten gefunden." });
+        }
+
+        const temperatur = tag.temperatureMax;
+        const wind = tag.windSpeed;
+        const regen = tag.precipitation;
+
+        res.json({
+            temperatur,
+            wind,
+            regen
+        });
+
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Wetterdaten:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Wetterdaten." });
+    }
 });
