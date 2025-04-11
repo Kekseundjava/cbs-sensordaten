@@ -301,23 +301,6 @@ export class SensorDataController {
         const windGeschwindigkeit = parseInt(this.aktuellesWetter?.wind || 0);
 
         daten.forEach(entry => {
-            const { Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, Licht, RolladenUnten } = entry;
-
-            // Warnung: Licht nach 16 Uhr noch an
-            if (aktuelleStunde >= 16 && Licht === true) {
-                warnungen.push(
-                    new WarnungData(Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, "Licht ist nach 16 Uhr noch eingeschaltet.")
-                );
-            }
-
-            // Warnung: Rolladen unten + starker Wind
-            if (RolladenUnten === true && windGeschwindigkeit >= 50) {
-                warnungen.push(
-                    new WarnungData(Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, "Rolladen ist unten bei starkem Wind.")
-                );
-            }
-        });
-        daten.forEach(entry => {
             const { Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, Licht } = entry;
 
             const displayVerbrauch = entry["Display Verbrauch"] != null ? entry["Display Verbrauch"] > 20 : null;
