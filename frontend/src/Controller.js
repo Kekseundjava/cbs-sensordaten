@@ -2,10 +2,12 @@
 import axios from 'axios';
 const RoomData = require('./RoomData');
 const ZeitSensorData = require('./ZeitSensorData');
+const WetterData = require('./WetterData');
+const WarnungData = require('./WarnungData');
 
 
 export class SensorDataController {
-//#region Konstruktor
+    //#region Konstruktor
     constructor(viewMethods) {
         this.filter = {
             gebaeude: null,
@@ -18,8 +20,8 @@ export class SensorDataController {
         this.view = viewMethods;
         this.cachedAllActualData = null;
     }
-//#endregion
-//#region EventHandler
+    //#endregion
+    //#region EventHandler
     setGebaeude(value) {
         this.filter.gebaeude = value;
         this.updateView();
@@ -45,46 +47,114 @@ export class SensorDataController {
         this.filter.datumBis = bis;
         this.updateView();
     }
+
+    async startExport() {
+        const { gebaeude, etage, raum, sensor, datumVon, datumBis } = this.filter;
+        let exportData = [];
     
-    startExport(){
-        
+        if (sensor && datumVon && datumBis) {
+            // Zeitdaten exportieren
+            const response = await axios.get('http://localhost:5001/GetZeitSensorData', {
+                params: { gebaeude, etage, raum, sensor, datum_von: datumVon, datum_bis: datumBis }
+            });
+    
+            exportData = response.data.map(d => `${d.timestamp}, ${d.value}`);
+        } else {
+            // Aktuelle Raumdaten exportieren
+            const data = await this.holeAllActualData();
+    
+            const gefiltert = data.filter(entry =>
+                (!gebaeude || entry.Gebaeude === gebaeude) &&
+                (!etage || entry.Etage === etage) &&
+                (!raum || entry.Raum === raum)
+            );
+    
+            exportData = gefiltert.map(entry =>
+                `Gebäude: ${entry.Gebaeude}, Etage: ${entry.Etage}, Raum: ${entry.Raum}, Temperatur: ${entry.Temperatur}, Luftfeuchtigkeit: ${entry.Luftfeuchtigkeit}`
+            );
+        }
+    
+        // Datei erzeugen & herunterladen
+        const blob = new Blob([exportData.join('\n')], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `export_${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
-    tryLogin(name, password){
-
+    //#endregion
+    //#region Public Methodes    
+    async tryLogin(name, password) {
+        try {
+            const response = await axios.post(`http://localhost:5001/checkUser`, {
+                benutzer: name,
+                passwort: password
+            });
+            console.log('Anmeldung erfolgreich:', response.data);
+            return true;
+        } catch (error) {
+            //console.error('Fehler bei der Anmeldung:', error);
+            return false;
+        }
     }
 
-//#endregion
-//#region Public Methodes
     async liefereVerfuegbareGebaeude() {
         const daten = await this.holeAllActualData();
         return [...new Set(daten.map(e => e.Gebaeude))];
     }
+
     async liefereVerfuegbareEtagen() {
         const daten = await this.holeAllActualData();
-        return [...new Set(daten.map(e => e.Etage))];
+        const { gebaeude } = this.filter;
+
+        const gefiltert = daten.filter(e =>
+            !gebaeude || e.Gebaeude === gebaeude
+        );
+
+        return [...new Set(gefiltert.map(e => e.Etage))];
     }
 
     async liefereVerfuegbareRaeume() {
         const daten = await this.holeAllActualData();
-        return [...new Set(daten.map(e => e.Raum))];
+        const { gebaeude, etage } = this.filter;
+
+        const gefiltert = daten.filter(e =>
+            (!gebaeude || e.Gebaeude === gebaeude) &&
+            (!etage || e.Etage === etage)
+        );
+
+        return [...new Set(gefiltert.map(e => e.Raum))];
     }
 
     async liefereVerfuegbareSensoren() {
         const daten = await this.holeAllActualData();
+        const { gebaeude, etage, raum } = this.filter;
+
+        const gefiltert = daten.filter(e =>
+            (!gebaeude || e.Gebaeude === gebaeude) &&
+            (!etage || e.Etage === etage) &&
+            (!raum || e.Raum === raum)
+        );
+
         const sensorKeys = new Set();
-        daten.forEach(entry => {
+        gefiltert.forEach(entry => {
             Object.keys(entry).forEach(key => {
                 if (!["Gebaeude", "Etage", "Raum"].includes(key)) {
                     sensorKeys.add(key);
                 }
             });
         });
+
         return Array.from(sensorKeys);
     }
 
-//#endregion
-//#region Internal Methodes
+
+    //#endregion
+    //#region Internal Methodes
     async updateView() {
         const { sensor, datumVon, datumBis } = this.filter;
 
@@ -93,6 +163,8 @@ export class SensorDataController {
         } else {
             await this.holeUndVerarbeiteAllActualData();
         }
+        await this.holeUndVerarbeiteWetterdaten(); // Wetter aktualisieren
+        await this.holeUndVerarbeiteWarnungen();
     }
 
     async holeUndVerarbeiteAllActualData() {
@@ -137,8 +209,65 @@ export class SensorDataController {
         this.cachedAllActualData = response.data;
         return this.cachedAllActualData;
     }
-//#endregion
-//#region View Simulation
+
+    async holeUndVerarbeiteWetterdaten() {
+        try {
+            const response = await axios.get('https://app-prod-ws.warnwetter.de/v30/stationOverviewExtended', {
+                params: { stationIds: 10515 }
+            });
+    
+            const wetter = response.data["10515"];
+            const tag = wetter?.days?.[0];
+    
+            if (!tag) return;
+    
+            const temperatur = tag.temperatureMax;
+            const wind = tag.windSpeed;
+            const regen = tag.precipitation;
+    
+            const wetterData = new WetterData(temperatur, wind, regen);
+    
+            // 👉 Wetterdaten merken
+            this.aktuellesWetter = wetterData;
+    
+            this.view.setWetterData(wetterData);
+    
+        } catch (error) {
+            console.error("Fehler beim Laden der Wetterdaten:", error);
+        }
+    }
+    
+    async holeUndVerarbeiteWarnungen() {
+        const daten = await this.holeAllActualData();
+        const warnungen = [];
+    
+        const aktuelleStunde = new Date().getHours();
+    
+        // 👉 Windgeschwindigkeit aus gemerkten Wetterdaten lesen
+        const windGeschwindigkeit = parseInt(this.aktuellesWetter?.wind || 0);
+    
+        daten.forEach(entry => {
+            const { Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, Licht, RolladenUnten } = entry;
+    
+            // Warnung: Licht nach 16 Uhr noch an
+            if (aktuelleStunde >= 16 && Licht === true) {
+                warnungen.push(
+                    new WarnungData(Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, "Licht ist nach 16 Uhr noch eingeschaltet.")
+                );
+            }
+    
+            // Warnung: Rolladen unten + starker Wind
+            if (RolladenUnten === true && windGeschwindigkeit >= 50) {
+                warnungen.push(
+                    new WarnungData(Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, "Rolladen ist unten bei starkem Wind.")
+                );
+            }
+        });
+    
+        this.view.setWarnungData(warnungen);
+    }
+    //#endregion
+    //#region View Simulation
 
     simuliereViewMitRoomData(roomDataList) {
         console.log("=== Raumdaten (gefiltert) ===");
@@ -157,8 +286,8 @@ export class SensorDataController {
             sensorDataList.forEach(d => console.log(d.toString()));
         }
     }
-    
-//#endregion
+
+    //#endregion
 }
 export default SensorDataController;
 
