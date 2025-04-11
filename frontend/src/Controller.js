@@ -196,9 +196,24 @@ export class SensorDataController {
             (!raum || entry.Raum === raum)
         );
 
-        const roomDataList = gefiltert.map(e =>
-            new RoomData(e.Gebaeude, e.Etage, e.Raum, e.Temperatur, e.Luftfeuchtigkeit)
-        );
+        const roomDataList = gefiltert.map(e => {
+            const luftfeuchtigkeit = e.Luftfeuchtigkeit || null;
+            const licht = e.Licht || null;
+        
+            const displayVerbrauch = e["Display Verbrauch"] != null ? e["Display Verbrauch"] > 20 : null;
+            const rolladaen = e.Rolladaen != null ? e.Rolladaen === 1 : null;
+        
+            return new RoomData(
+                e.Gebaeude,
+                e.Etage,
+                e.Raum,
+                e.Temperatur || null,
+                e.Luftfeuchtigkeit || null,
+                e.Licht || null,
+                displayVerbrauch,
+                rolladaen
+            );
+        });
 
         //this.simuliereViewMitRoomData(roomDataList);
         this.view.setSensorData(roomDataList);
@@ -299,6 +314,26 @@ export class SensorDataController {
             if (RolladenUnten === true && windGeschwindigkeit >= 50) {
                 warnungen.push(
                     new WarnungData(Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, "Rolladen ist unten bei starkem Wind.")
+                );
+            }
+        });
+        daten.forEach(entry => {
+            const { Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, Licht } = entry;
+
+            const displayVerbrauch = entry["Display Verbrauch"] != null ? entry["Display Verbrauch"] > 20 : null;
+            const rolladaen = entry.Rolladaen != null ? entry.Rolladaen === 1 : null;
+        
+            // Warnung: Licht nach 21 Uhr noch an
+            if (aktuelleStunde >= 21 && Licht > 70) {
+                warnungen.push(
+                    new WarnungData(Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, Licht, displayVerbrauch, rolladaen, "Licht ist nach 16 Uhr noch eingeschaltet.")
+                );
+            }
+        
+            // Warnung: Rolladen unten + starker Wind
+            if (rolladaen && windGeschwindigkeit >= 50) {
+                warnungen.push(
+                    new WarnungData(Gebaeude, Etage, Raum, Temperatur, Luftfeuchtigkeit, Licht, displayVerbrauch, rolladaen, "Rolladen ist unten bei starkem Wind.")
                 );
             }
         });
