@@ -45,6 +45,8 @@ html, body {
 .warning{
     background-color: red;
     min-height: 80vh;
+    overflow-y: auto;
+    max-height: 600px;
 }
 
 .selects{

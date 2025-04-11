@@ -11,7 +11,7 @@ class RoomData {
     }
 
     toString() {
-        return `Gebaeude=${this.gebaeude}, Etage=${this.etage}, Raum=${this.raum}, ` +
+        return `${this.gebaeude}${this.etage}${this.raum}: ` +
                `Temperatur=${this.temperatur}°C, Luftfeuchtigkeit=${this.luftfeuchtigkeit}, ` +
                `Licht=${this.licht} lumen, Display An=${this.display_Verbrauch}, Rolladen Oben=${this.rolladaen}`;
     }

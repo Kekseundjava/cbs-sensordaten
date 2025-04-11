@@ -235,7 +235,8 @@ const tmprain = "23";
         <div className="data-container">
             {sendata.map((item, index) => (
                 <div className="data-box" key={index}>
-                <h3>{ item}</h3>
+                    <h3>{item.split(":")[0]}</h3>
+                    <p>{item.split(":")[1]}</p>
                 </div>
             ))}
         </div>
@@ -283,12 +284,14 @@ const tmprain = "23";
         </div>
         <div className="warning">
           <h1>Warnungen</h1>
+          {debugdata}
           {warndata.map((item, index) => (
             <div className="warning-box" key={index}>
-              <h3>{item}</h3>
+              <h3>{item.split(":")[0]}</h3>
+                <p>{item.split(":")[1]}</p>
             </div>
           ))}
-          {debugdata}
+          
         </div>
         
       </div>
